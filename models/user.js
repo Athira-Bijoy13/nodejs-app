@@ -1,5 +1,6 @@
 const mongoose=require('mongoose')
-
+const jwt = require("jsonwebtoken")
+const bcrypt = require('bcryptjs')
 const userSchema=mongoose.Schema(
     {
         userID:{
@@ -32,7 +33,7 @@ const userSchema=mongoose.Schema(
     }
 )
 
-user_schema.methods.toJSON=function () {
+userSchema.methods.toJSON=function () {
     const user=this;
     const userObject=user.toObject();
     delete userObject.tokens;
@@ -40,6 +41,12 @@ user_schema.methods.toJSON=function () {
     return userObject;
 }
 
-
+userSchema.pre('save', async function (next) {
+    const user = this
+    if (user.isModified('password')) {
+        user.password = await bcrypt.hash(user.password, 8)
+    }
+    next()
+})
 const User=mongoose.model("users",userSchema)
 module.exports=User
